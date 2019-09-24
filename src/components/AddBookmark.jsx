@@ -42,31 +42,39 @@ function AddBookmark(props) {
 
              .then(res => {
 
-		        let rawColls = res.data.collections;
-		        let sortedColls = [];
-		        let order = res.data.order;
+	             let rawColls = res.data.collections.map((c) => ({
+		             id: c._id,
+		             title: c.title
+	             }));
 
-		        for (let i = 0; i < order.length; i++) {
-			        const index = rawColls.findIndex(c => c.id === order[i]);
-			        if (index >= 0) {
-				        sortedColls.push(rawColls[index]);
-				        rawColls.splice(index, 1);
-			        }
-		        }
+	             let order = res.data.order;
 
-		        if (rawColls.length > 0) {
+	             let sortedColls = [];
 
-			        for (let j = 0; j < rawColls.length; j++) {
-				        sortedColls.push(rawColls[j]);
-				        order.push(rawColls[j].id);
-			        }
+	             for (let i = 0; i < order.length; i++) {
+		             const index = rawColls.findIndex(c => c.id === order[i]);
+		             if (index >= 0) {
+			             sortedColls.push(rawColls[index]);
+			             rawColls.splice(index, 1);
+		             }
+	             }
 
-			        axios.post('https://astrostore.io/api/user/order',
-				        {order: order},
-				        {headers: {Authorization: `JWT ${token}`}})
-		        }
+	             if (rawColls.length > 0) {
+		             for (let j = 0; j < rawColls.length; j++) {
+			             sortedColls.push(rawColls[j]);
+		             }
+	             }
 
-		        setDropItems(sortedColls);
+	             let newOrder = sortedColls.map(c => c.id);
+
+	             if (newOrder !== order) {
+		             axios.post('https://astrostore.io/api/user/order',
+			             {order: newOrder},
+			             {headers: {Authorization: `JWT ${token}`}})
+		                  .then(res => console.log(res.data));
+	             }
+
+	             setDropItems(sortedColls);
 	        });
 
     }, [token]);
@@ -127,7 +135,7 @@ function AddBookmark(props) {
                 >
                     {
                         dropItems.map(c =>
-                            <MenuItem value={c._id} key={c._id} className={classes.root} >
+                            <MenuItem value={c.id} key={c.id} className={classes.root} >
                                 {c.title}
                             </MenuItem>
                         )
